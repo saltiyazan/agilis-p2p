@@ -1,1 +1,1 @@
-# agilis-p2p
+# Agile Network Service Development - P2P Homework
