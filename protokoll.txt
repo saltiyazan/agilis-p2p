@@ -1,0 +1,31 @@
+A protokollnak lesz egy globális paramétere, NUM_REPLICAS, ami meghatározza, hogy egy szerver adatairól hány másik tárol másolatot. Ezt az értéket egy config fájlban tároljuk és onnan olvassuk be; az értéke kiindulásként legyen 2.
+
+Inicializálás:
+
+A szervereknek ismerni kell az összes többi szervert, melyeket egy listában tárolnak. A listában az elemek sorrendje határozza meg, hogy az adott szerver adatairól melyikek tárolnak másolatot, és elromlása esetén kinek küldik helyette az adatot. Ha pl. az 1-es szerver listája a [5, 2, 4, 7, 3, 6], akkor az 5-ös és a 2-es fog másolatot tárolni az ő adatairól. A szerverek létrehozását és egymással "megismertetését" a tesztkörnyezet végzi. A szerverek ezenfelül tárolnak egy listát a saját szenzoraikról.
+
+A szenzoroknak van egy szerverlistájuk, amelyet a saját szerverüktől kapnak (tehát egy szerverhez tartozó szenzorok esetén ez ugyanaz). A lista első eleme a saját szerverük. Pl. a fenti 1-es szerverhez tartozó szenzor listája: [1, 5, 2, 4, 7, 3, 6]. Ez határozza meg, hogy kinek kell küldenie az adatokat: először a listában elsőnek próbálja elküldeni, ha az elérhetetlen, akkor a másodiknak stb. A szenzorok kezdetben a saját szerverüket ismerik, ő fogja nekik elküldeni a többi szerver listáját.
+
+Tárolt adatok
+
+A szerverek háromféle adatot tárolnak:
+
+- Saját szenzortól kapott adatok: ezeket kell alapból tárolniuk. A tárolás lehet mondjuk python dict-ben, ahol a szenzor_id-khez tartozik az adatok tömbje: {szenzor_id : [adatok] }
+
+- Más szerverektől kapott adatok (replikák): másolatot tárol egy másik szerver adatairól, hogyha az elromlik, az adatok ne vesszenek el. Ez is lehet python dict, a szerver id-jével indexelhető, és az előzőhöz hasonló további dict-eket tartalmaz: {szerver_id : {szenzor_id : [adatok] } }
+
+- Más szenzoroktól kapott ideiglenes adatok: akkor kaphat ilyet, ha a szenzor saját szervere nem elérhető. Megőrzi addig, amíg nem tudja elküldeni a másik szervernek, majd ha lehet, elküldi neki, és törli ezeket. A tárolás formátuma az előzővel azonos: {szerver_id : {szenzor_id : [adatok] } }
+
+Működés
+
+A szenzorok bizonyos időközönként generálnak adatokat (ezt a tesztkörnyezet szimulálja, hogy mikor melyik szenzor generáljon). Ez lehet bármi, pl. egy időbélyeg és egy random szám. Ebből előállítja az elküldendő üzenetet: (saját_id, saját_szerver_id, adat) A generált adatot megpróbálja elküldeni a saját szerverének, ami az első a listájában. Ha ez nem sikerül, akkor a listában második szerverrel próbálkozik; ha annak sem, akkor a harmadikkal stb.
+
+A szerverek, ha kaptak adatot, leellenőrzik, hogy nekik címezték-e (üzenetben a szenzor saját szerverének id-je ugyanaz-e, mint a saját id). Ha igen, akkor beteszik az adatot az 1. tárolóba, és gondoskodnak a másolatok létrehozásáról. Ha nem nekik címezték, akkor a 3. tárolóba teszik, és amikor lehet, elküldik a cél szervernek. Ekkor is gondoskodnak a másolatok létrehozásáról.
+
+Másolatok létrehozása: a szerver, aki az adatot kapta, továbbítja azt az első NUM_REPLICAS darab szervernek a listájában. Ha ezek közül valamelyik nem elérhető, akkor a listában hátrébb lévőkkel próbálkozik mindaddig, amíg el nem tudta küldeni NUM_REPLICAS darab szervernek az üzenetet (vagy el nem fogytak a lehetséges szerverek).
+
+Ha egy szerver egy ideig nem volt elérhető, majd újra felébredt, akkor a többi szerverrel szinkronizálnia kell a saját adatait. Ekkor minden szervert körbekérdez, hogy van-e neki szánt adata (ideiglenes vagy másolat); akinek van, az elküldi neki, majd ha ideiglenes volt, akkor törli. Az így begyűjtött adatokat a szerver letárolja, figyelve arra, hogy semmit ne tároljon kétszer.
+
+A protokoll üzeneteket az osztályok receiveMsg() függvényének meghívásával lehet küldeni. Ennek az első paramétere legyen egy string, ami megadja az üzenet típusát (pl. 'replica', ha másolatot küldünk valakinek; 'send_my_data', ha el felébredés után el akarjuk kérni egy másik szervertől a nekünk szánt adatokat stb.). A további paraméterek az üzenet típusától függnek, ezek legyenek a **kwargs pararméterben.
+
+A mostani környezetben mindent logoljunk a kimenetre (adatok elküldése, adatok fogadása, protokoll üzenetek küldése) valamilyen egyértelmű formátumban, hogy tudjuk nyomonkövetni, mi történik.
