@@ -1,0 +1,20 @@
+Specifikáció
+
+-Maximum 60 szenzor és 10 szerver, a számuk változhat. 
+-A változás lassú, egy új eszköz keletkezése/megszűnése után van elég idő a változást kezelni.
+-Egy szerver a hozzá tartozó szenzorokkal együtt egy LAN-t alkot.
+-A küldött adatok titkosítatlanok.
+-A küldött adatok előfeldolgozva jönnek az eszköztől, nekünk nem kell módosítani rajtuk.
+-Egy csomagban, rövid periódusonként küldi az eszköz a periódus alatt összegyűjtött adatokat.
+-Nem lehet előre beállított IP-címeket használni.
+-Az adatstrukturan belul a sorrend nem szamit.
+-Egy szerveren nem lehet kétszer ugyanazt tárolni.
+-Ha több helyen tároljuk az adatokat, azok mozgatásakor ki kell szűrni a duplikációkat.
+-Ha leáll egy szerver, az adatgyűjtési periódus végén azonnal továbbítani kell az adatokat egy tartalék szervernek.
+-A szerverek IP-címei menet közben változhatnak.
+-Tárolt adat már nem veszik el.
+-A szenzorról csak a sikeresen elküldött adat törölhető.
+-A szerveren az adott alhálózat adatai visszakereshetők, szenzor szerint.
+-Ha egy szerver kiesik, azt észre kell vennie a hálózatnak.
+-Amíg a kiesett szerver újraéled, át kell konfigurálni a hozzá tartozó szenzorokat, hogy máshova küldjék az adatokat.
+-Egy szerver újraéledése után rá kell tölteni a kihagyott adatokat.
