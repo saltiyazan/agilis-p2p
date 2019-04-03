@@ -20,6 +20,8 @@ class StorageServer:
 
     #megkapja az adatot és eltárolja a megfelelő szenzorhoz tartozó listába
     def receive_data(self, message, sensor_id ):
+        if sensor_id not in self.data:
+            self.data[sensor_id] = []
         self.data[sensor_id].append(message)
         if self.alive is True:
             return "received"
