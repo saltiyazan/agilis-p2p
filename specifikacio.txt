@@ -14,6 +14,7 @@ Specifikáció
 -A szerverek IP-címei menet közben változhatnak.
 -Tárolt adat már nem veszik el.
 -A szenzorról csak a sikeresen elküldött adat törölhető.
+-A szenzoroknak eltérő lehet a mintavételi frekvenciájuk, és az általuk küldött adatok típusa is.
 -A szerveren az adott alhálózat adatai visszakereshetők, szenzor szerint.
 -Ha egy szerver kiesik, azt észre kell vennie a hálózatnak.
 -Amíg a kiesett szerver újraéled, át kell konfigurálni a hozzá tartozó szenzorokat, hogy máshova küldjék az adatokat.
