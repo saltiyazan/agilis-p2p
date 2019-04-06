@@ -1,4 +1,4 @@
-from numpy import *
+from p2p import Message
 class StorageServer:
 
     def __init__(self, alive, id):
@@ -15,41 +15,54 @@ class StorageServer:
         self.sensors.append(sensor)
 
     #még csak egyszerűen hozzáadjuk a szomszédok listájához
-    def add_neighbour_server(self,server):
-        self.neighbour_servers.append(server)
+    def add_neighbour_server(self,server_id):
+        self.neighbour_servers.append(server_id)
 
-    #megkapja az adatot és eltárolja a megfelelő szenzorhoz tartozó listába
-    def receive_data(self, message, sensor_id ):
-        if sensor_id not in self.data:
-            self.data[sensor_id] = []
-        self.data[sensor_id].append(message)
-        if self.alive is True:
-            return "received"
+    #megkapja az adatot és eltárolja a megfelelő listában
+    def receive_data(self, msg):
+        #tud-e adatot fogadni
+        if self.alive:
+            #saját szenzortól jön az adat
+            if msg.parent_server_id==self.id:
+                if msg.sensor_id not in self.data:
+                    self.data[msg.sensor_id] = []
+                self.data[msg.sensor_id].append(msg.content)
+                return True
+
+            #nem saját senzortól jön
+            else:
+                #a szenzőr szülő szervere él akkor azért kapja ez a szerver az adatot hogy duplikáltan tároljuk el az adatot
+                if msg.is_parent_alive == True:
+                    if msg.parent_server_id not in self.other_data:
+                        self.other_data[msg.parent_server_id]={}
+                    if msg.sensor_id not in self.other_data[msg.parent_server_id]:
+                        self.other_data[msg.parent_server_id][msg.sensor_id]=[]
+                    self.other_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
+                    return True
+                #a szenzor szülő szervere leállt és ezért kapja ez a szerver az adatot
+                else:
+                    if msg.parent_server_id not in self.dead_servers_data:
+                        self.dead_servers_data[msg.parent_server_id]={}
+                    if msg.sensor_id not in self.dead_servers_data[msg.parent_server_id]:
+                        self.dead_servers_data[msg.parent_server_id][msg.sensor_id]=[]
+                    self.dead_servers_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
+                    return True
         else:
-            return None
+            return False
 
-    #megkapja az adatot és a megelelő helyre beteszi
-    def receive_duplicated_data(self,server_id,sensor_id,message):
-        self.other_data[server_id][sensor_id].append(message)
-        if self.alive is True:
-            return "received"
-        else:
-            return None
 
+    def send_msg(self,server_id,msg):
+        res=self.neighbour_servers[server_id].receive_duplicated_data(msg)
+        if not res:
+            raise Exception(server_id+ 'szerver is dead')
     #ezzel tudja a saját szenzorainak az adatait elküldeni hogy azok duplikálva tárolódjanak
-    def send_data(self,server_id):
-        for key in self.data.keys():
-            res=self.neighbour_servers[server_id].receive_duplicated_data(self.id,key,self.data[key])
-            if res != "received" :
-                raise Exception(server_id+ 'server is dead')
 
-    #ezt kell meghívni amikor a szenzorok nem tudják a saját szerverüknek elküldeni az adatot hanem elküldik egy másik szervernek
-    def receive_data_of_dead_server(self, server_id, sensor_id,message):
-        self.dead_servers_data[server_id][sensor_id].append(message)
-        if self.alive is True:
-            return "received"
-        else:
-            return None
+    def send_data_to_duplicate(self,msg):
+        for szerver in self.neighbour_servers:
+            for sensor in self.data.keys():
+                msg=Message(sensor,self.id,self.data[sensor],self.alive)
+                self.send_msg(szerver,msg)
+
 
     #ezzel szólunk hogy egy szerver megint él vagy új szerver lépett be
     def receive_new_server_is_alive(self,server_id):
@@ -62,4 +75,9 @@ class StorageServer:
         self.neighbour_servers.remove(server_id)
 
     def repair_dead_server(self,server_id):
-        return 0
+        for sensor in self.dead_servers_data[server_id]:
+            while self.dead_servers_data[server_id][sensor]:
+                data=self.dead_servers_data[server_id][sensor].pop()
+                msg=Message(sensor,server_id,data,False)
+                self.send_msg(server_id,msg)
+        self.dead_servers_data.pop(server_id)
