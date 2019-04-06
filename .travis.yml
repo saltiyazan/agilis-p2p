@@ -1,6 +1,29 @@
+sudo: required
+env:
+  global:
+    - SERVERS=2
+    - SENSORS=3
 language: python
 python:
-  - "3.4"
-  - "3.5"
   - "3.6"
-script: pytest
+services:
+  - docker
+jobs:
+  include:
+    - stage: build and push docker image
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker build -t p2p-server -f server_Dockerfile .
+        - docker build -t p2p-sensor -f sensor_Dockerfile .
+        - docker tag p2p-server engedics/p2p-server:latest
+        - docker tag p2p-sensor engedics/p2p-sensor:latest
+        - docker push engedics/p2p-server:latest
+        - docker push engedics/p2p-sensor:latest
+    - stage: run tests
+      install: pip install -r requirements.txt
+      name: test 1
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test1.py
+    - name: test 2
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_2.py
+    - name: test 3
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_3.py
