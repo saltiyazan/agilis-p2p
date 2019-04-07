@@ -1,4 +1,5 @@
-from p2p import Message
+from p2p.Message import Message
+from p2p.config import NUM_REPLICAS
 class StorageServer:
 
     def __init__(self, alive, id):
@@ -13,10 +14,13 @@ class StorageServer:
     #még csak egyszerűen hozzáadjuk a szenzor listához
     def add_sensor(self,sensor):
         self.sensors.append(sensor)
+        sensor.redefine_servers([self] + self.neighbour_servers)
 
     #még csak egyszerűen hozzáadjuk a szomszédok listájához
     def add_neighbour_server(self,server_id):
         self.neighbour_servers.append(server_id)
+        for sensor in self.sensors:
+            sensor.redefine_servers([self] + self.neighbour_servers)
 
     #megkapja az adatot és eltárolja a megfelelő listában
     def receive_data(self, msg):
@@ -27,6 +31,7 @@ class StorageServer:
                 if msg.sensor_id not in self.data:
                     self.data[msg.sensor_id] = []
                 self.data[msg.sensor_id].append(msg.content)
+                self.create_replicas(msg)
                 return True
 
             #nem saját senzortól jön
@@ -46,6 +51,7 @@ class StorageServer:
                     if msg.sensor_id not in self.dead_servers_data[msg.parent_server_id]:
                         self.dead_servers_data[msg.parent_server_id][msg.sensor_id]=[]
                     self.dead_servers_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
+                    self.create_replicas(msg)
                     return True
         else:
             return False
@@ -81,3 +87,18 @@ class StorageServer:
                 msg=Message(sensor,server_id,data,False)
                 self.send_msg(server_id,msg)
         self.dead_servers_data.pop(server_id)
+
+    def create_replicas(self, msg):
+        """
+        Masolatok keszitese a kapott adatrol a szomszedos szerverekre
+        :param msg: a kapott uzenet
+        :return: None
+        """
+        n_replicas_created = 0
+        # ha nem nekunk jott az adat eredetileg, akkor a sajat szerver nem aktiv
+        msg.is_parent_alive = (msg.parent_server_id == self.id)
+        for server in self.neighbour_servers:
+            if server.receive_data(msg):
+                n_replicas_created += 1
+            if n_replicas_created == NUM_REPLICAS:
+                break

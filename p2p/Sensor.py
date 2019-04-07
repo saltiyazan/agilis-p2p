@@ -1,3 +1,5 @@
+from p2p.Message import Message
+
 class Sensor:
     def __init__(self, id, servers):
         self.id = id
@@ -23,7 +25,9 @@ class Sensor:
     
     #megpróbál küldeni a szervernek
     def try_to_send_data(self, server, data):
-        return True
+        msg = Message(self.id, self.servers[0].id, data)
+        result = server.receive_data(msg)
+        return  result
 
     #sorban megpróbál küldeni az összes szervernek
     def send_data(self, data):

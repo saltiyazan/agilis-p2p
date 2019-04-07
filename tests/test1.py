@@ -1,5 +1,13 @@
+h="""
+Adatkuldes ellenorzese.
+Letrehozunk egy szervert es hozzaadunk egy szenzort.
+A szenzor elkuld egy adatot; ellenorizzuk, hogy a szerverre megerkezett-e.
+"""
+
 from p2p.Sensor import Sensor
 from p2p.StorageServer import  StorageServer
+
+print(h)
 
 server1 = StorageServer(alive=True, id=1001)
 sensor1 = Sensor(9001, servers=[])
