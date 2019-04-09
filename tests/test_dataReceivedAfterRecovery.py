@@ -12,6 +12,11 @@ print(h)
 
 mainServer = StorageServer(alive=True, id=1)
 backupServer = StorageServer(alive=True, id=2)
+mainServer.add_neighbour_server(backupServer)
+backupServer.add_neighbour_server(mainServer)
+
+print("main szomszedok: ", mainServer.neighbour_servers)
+print("backup szomszedok: ", backupServer.neighbour_servers)
 
 s_id = 10
 sensor = Sensor(id=s_id, servers=[mainServer, backupServer])
