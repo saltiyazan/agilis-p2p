@@ -20,7 +20,7 @@ class Sensor:
                 data_to_send=data
                 break
         else:
-            raise Exception(data + " data has not yet by the sensor.")
+            raise Exception(data + " sensor has not the excepted data in new datas.")
         return data_to_send
     
     #megpróbál küldeni a szervernek

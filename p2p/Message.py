@@ -10,7 +10,7 @@ class Message:
 
 #Készült egy általánosabb megoldása is a message üzenetnek, szerdán megvitatjuk, melyik a szükségesebb.
 class MessageV2:
-    def __init__(self, source_id, destination_id, content, source_is_server, destination_is_server):
+    def __init__(self, source_id, destination_id, source_is_server, destination_is_server, is_sent=False, content=None):
         self.source_id = source_id
         self.destination_id = destination_id
         self.content = content
