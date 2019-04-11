@@ -21,9 +21,17 @@ jobs:
         - docker push engedics/p2p-sensor:latest
     - stage: run tests
       install: pip install -r requirements.txt
-      name: test 1
-      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_dataSending.py
-    - name: test 2 - replicas
-      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_replicas.py
-    - name: test 3 - complex messaging
+      name: complex messaging
       script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_complexMessaging.py
+    - name: data duplication
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_dataDuplication.py
+    - name: data received after recovery
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_dataReceivedAfterRecovery.py
+    - name: data sending
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_dataSending.py
+    - name: load test
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_loadTest.py
+    - name: replicas
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_replicas.py
+    - name: server down
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_serverDown.py
