@@ -23,7 +23,7 @@ jobs:
       install: pip install -r requirements.txt
       name: test 1
       script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test1.py
-    - name: test 2
-      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_2.py
-    - name: test 3
-      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_3.py
+    - name: test 2 - replicas
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test2-replicas.py
+    - name: test 3 - complex messaging
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test3-complex-messaging.py
