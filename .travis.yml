@@ -22,8 +22,8 @@ jobs:
     - stage: run tests
       install: pip install -r requirements.txt
       name: test 1
-      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test1.py
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_dataSending.py
     - name: test 2 - replicas
-      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test2-replicas.py
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_replicas.py
     - name: test 3 - complex messaging
-      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test3-complex-messaging.py
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_complexMessaging.py
