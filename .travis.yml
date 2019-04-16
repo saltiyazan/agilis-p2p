@@ -35,3 +35,5 @@ jobs:
       script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_replicas.py
     - name: server down
       script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_serverDown.py
+    - name: multiple servers down
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_MultipleServersDown.py
