@@ -1,5 +1,6 @@
 from p2p.Sensor import Sensor
 from p2p.StorageServer import StorageServer
+from p2p.Data import Data
 
 
 def test_dataSending():
@@ -17,7 +18,7 @@ def test_dataSending():
     server1.add_sensor(sensor1)
     sensor1.redefine_servers([server1])
 
-    data = 'simple_test_data'
+    data = Data('simple_test_data')
     #server1.receive_data('testdata', sensor1.id)
     sensor1.send_data(data)
     print('Server1 data:', server1.data)
@@ -25,3 +26,5 @@ def test_dataSending():
 
     print('Test ok')
 
+if __name__ == '__main__':
+    test_dataSending()

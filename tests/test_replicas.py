@@ -1,3 +1,4 @@
+from p2p.Data import Data
 from p2p.Sensor import Sensor
 from p2p.StorageServer import StorageServer
 from p2p.config import NUM_REPLICAS
@@ -31,19 +32,22 @@ def test_replicas():
 
     assert(len(sensor1.servers) == 4 and sensor1.servers[0] == server1)
 
-    data = 'simple_test_data'
+    data = Data('simple_test_data')
     sensor1.send_data(data)
 
     print('Server1 data:', server1.data)
     assert (len(server1.data) == 1)
 
     print('Server2 replicas:', server2.other_data)
-    assert (server2.other_data == {1001: {9001: ['simple_test_data']}})
+    assert (server2.other_data[1001][9001][0].data[1] == 'simple_test_data')
 
     print('Server3 replicas:', server3.other_data)
-    assert (server3.other_data == {1001: {9001: ['simple_test_data']}})
+    assert (server3.other_data[1001][9001][0].data[1] == 'simple_test_data')
 
     print('Server4 replicas:', server4.other_data)
     assert (server4.other_data == {} or NUM_REPLICAS != 2)
 
     print('Test ok')
+
+if __name__ == '__main__':
+    test_replicas()

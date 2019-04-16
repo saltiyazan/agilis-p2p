@@ -1,5 +1,6 @@
 from p2p.Sensor import Sensor
 from p2p.StorageServer import StorageServer
+from p2p.Data import Data
 
 
 def test_dataReceivedAfterRecovery():
@@ -20,18 +21,21 @@ def test_dataReceivedAfterRecovery():
     s_id = 10
     sensor = Sensor(id=s_id, servers=[mainServer, backupServer])
 
-    data_1 = "data_1 to mainServer"
+    data_1 = Data("data_1 to mainServer")
     sensor.send_data(data=data_1)
     assert(data_1 in mainServer.data[s_id])
     assert(backupServer.data == {})
 
     #mainServer leallitasa
-    mainServer.alive = False
-    data_2 = "data_2 during main down"
+    mainServer.change_alive_state(False)
+    data_2 = Data("data_2 during main down")
     sensor.send_data(data=data_2)
     assert(data_2 not in mainServer.data[s_id])
     assert(data_2 in backupServer.dead_servers_data[1][s_id])
 
     #main feleled
-    mainServer.alive = True
+    mainServer.change_alive_state(True)
     assert(data_2 in mainServer.data[s_id])
+
+if __name__ == '__main__':
+    test_dataReceivedAfterRecovery()

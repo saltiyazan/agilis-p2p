@@ -1,3 +1,4 @@
+from p2p.Data import Data
 from p2p.Sensor import Sensor
 from p2p.StorageServer import StorageServer
 
@@ -18,10 +19,14 @@ def test_loadTest():
     data_num = 100
     for n in range(data_num):
         for sensor in sensors:
-            sensor.send_data("data_from_sensor" + str(sensor.id) + "_data" + str(n))
+            sensor.send_data(Data("data_from_sensor" + str(sensor.id) + "_data" + str(n)))
 
     for m in range(data_num):
         for sensor in sensors:
-            assert("data_from_sensor" + str(sensor.id) + "_data" + str(m) in server.data[sensor.id])
+            # itt csak a datak ertekevel hasonlitjuk ossze, az idoket nem nezzuk
+            assert("data_from_sensor" + str(sensor.id) + "_data" + str(m) in [d.data[1] for d in server.data[sensor.id]])
 
     print("Test ok")
+
+if __name__ == '__main__':
+    test_loadTest()

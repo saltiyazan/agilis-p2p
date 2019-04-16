@@ -1,6 +1,7 @@
 from p2p.Sensor import Sensor
 from p2p.StorageServer import  StorageServer
-from p2p.config import  NUM_REPLICAS
+from p2p.Data import Data
+import random
 from random import randint
 
 
@@ -11,6 +12,8 @@ def test_complexMessaging():
     """
 
     print(h)
+
+    random.seed(42)
 
     def create_network(num_servers, num_sensors):
         """
@@ -43,8 +46,8 @@ def test_complexMessaging():
 
     for sensor_list in sensors:
         for sensor in sensor_list:
-            sensor.send_data(randint(0,255))
-            sensor.send_data(randint(1000, 1255))
+            sensor.send_data(Data(randint(0,255)))
+            sensor.send_data(Data(randint(1000, 1255)))
 
     for server in servers:
         print('Server', server.id)
@@ -59,3 +62,6 @@ def test_complexMessaging():
             assert (len(server.other_data[od]) == 2)
             for d in server.other_data[od].items():
                 assert (len(d) == 2)
+
+if __name__ == '__main__':
+    test_complexMessaging()

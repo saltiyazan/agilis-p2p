@@ -1,5 +1,6 @@
 from p2p.Sensor import Sensor
 from p2p.StorageServer import StorageServer
+from p2p.Data import Data
 
 def test_dataDuplication():
     h="""
@@ -13,7 +14,7 @@ def test_dataDuplication():
     server = StorageServer(alive=True, id=1)
     s_id = 10
     sensor = Sensor(id=s_id, servers=[server])
-    data_ = "test_data"
+    data_ = Data('test data')
 
     sensor.send_data(data=data_)
     sensor.send_data(data=data_)
@@ -21,3 +22,5 @@ def test_dataDuplication():
     assert(server.data[s_id].count(data_) == 1)
 
 
+if __name__ == '__main__':
+    test_dataDuplication()
