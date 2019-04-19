@@ -37,3 +37,5 @@ jobs:
       script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_serverDown.py
     - name: multiple servers down
       script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_MultipleServersDown.py
+    - name: new server appearing
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_newServerAppearing.py
