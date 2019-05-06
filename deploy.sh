@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 #create networks and containers
+		#DNS server
+        docker create --name dns \
+          engedics/p2p-dns
+        docker start dns
 for i in $(seq 1 $1);
-do
+do	
 		#network
         docker network create \
           --driver=bridge \
@@ -16,7 +20,8 @@ do
           --publish 10.0.$i.1:9600:9600 \
           engedics/p2p-server
         docker start h$i
-
+	ping h1
+	
 		#sensors
         for o in $(seq 1 $2);
         do
