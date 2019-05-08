@@ -1,7 +1,7 @@
 from p2p.Message import Message
 from p2p.config import NUM_REPLICAS, LOGGING_ENABLED
 import rpyc
-import socket
+import netifaces as ni
 class StorageServer:
 
     def __init__(self, alive, id):
@@ -13,7 +13,7 @@ class StorageServer:
         self.neighbour_servers=[]
         #self.neighbour_references = {}
         self.dead_servers_data={}
-        self.ip=socket.gethostbyname(socket.gethostname())
+        self.ip = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
 
     def __str__(self):
         """

@@ -1,7 +1,8 @@
 from p2p.Message import Message
 from p2p.config import LOGGING_ENABLED
 import rpyc
-import socket
+import netifaces as ni
+
 
 class Sensor:
     def __init__(self, id, servers):
@@ -11,7 +12,7 @@ class Sensor:
         self.has_new_data=False
         self.recieved_messages=[]
         self.message_to_send=""
-        self.ip=socket.gethostbyname(socket.gethostname())
+        self.ip = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
 
     def __str__(self):
         """
