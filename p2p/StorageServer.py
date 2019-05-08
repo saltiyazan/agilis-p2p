@@ -1,5 +1,7 @@
 from p2p.Message import Message
 from p2p.config import NUM_REPLICAS, LOGGING_ENABLED
+import rpyc
+import socket
 class StorageServer:
 
     def __init__(self, alive, id):
@@ -11,6 +13,7 @@ class StorageServer:
         self.neighbour_servers=[]
         #self.neighbour_references = {}
         self.dead_servers_data={}
+        self.ip=socket.gethostbyname(socket.gethostname())
 
     def __str__(self):
         """
@@ -41,7 +44,8 @@ class StorageServer:
     def add_sensor(self, sensor):
         self.log('Sensor added:', sensor)
         self.sensors.append(sensor)
-        sensor.redefine_servers([self] + self.neighbour_servers)
+        c = rpyc.connect(sensor.ip, 9600)
+        c.root.redefine_servers([self] + self.neighbour_servers)
 
     #még csak egyszerűen hozzáadjuk a szomszédok listájához
     def add_neighbour_server(self, server):
@@ -49,7 +53,8 @@ class StorageServer:
             self.log('Neighbour server added:', server)
             self.neighbour_servers.append(server)
             for sensor in self.sensors:
-                sensor.redefine_servers([self] + self.neighbour_servers)
+                c = rpyc.connect(sensor.ip, 9600)
+                c.root.redefine_servers([self] + self.neighbour_servers)
 
     #megkapja az adatot és eltárolja a megfelelő listában
     def receive_data(self, msg):
@@ -95,9 +100,10 @@ class StorageServer:
     def send_msg(self,server_id,msg):
         for srv in self.neighbour_servers:
             if srv.id == server_id:
-                res=srv.receive_data(msg)
-                if not res:
-                    raise Exception(server_id+ 'szerver is dead')
+                c = rpyc.connect(srv.ip, 9600)
+                res=c.root.receive_data(msg)
+                #if not res:
+                #    raise Exception(server_id+ 'server is dead')
                 break
         else:
             raise Exception('Could not find server with id ' + str(server_id))
@@ -105,10 +111,10 @@ class StorageServer:
     #ezzel tudja a saját szenzorainak az adatait elküldeni hogy azok duplikálva tárolódjanak
 
     def send_data_to_duplicate(self,msg):
-        for szerver in self.neighbour_servers:
+        for server in self.neighbour_servers:
             for sensor in self.data.keys():
                 msg=Message(sensor,self.id,self.data[sensor],self.alive)
-                self.send_msg(szerver,msg)
+                self.send_msg(server,msg)
 
 
     #ezzel szólunk hogy egy szerver megint él vagy új szerver lépett be
@@ -153,4 +159,11 @@ class StorageServer:
             self.alive = True
             # collect missed data
             for server in self.neighbour_servers:
-                server.receive_new_server_is_alive(self)
+                c = rpyc.connect(server.ip, 9600)
+                c.root.receive_new_server_is_alive(self)
+
+
+if __name__ == "__main__":
+    from rpyc.utils.server import ThreadedServer
+    t = ThreadedServer(StorageServer(), port=9600)
+    t.start()

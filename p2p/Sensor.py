@@ -1,5 +1,7 @@
 from p2p.Message import Message
 from p2p.config import LOGGING_ENABLED
+import rpyc
+import socket
 
 class Sensor:
     def __init__(self, id, servers):
@@ -9,6 +11,7 @@ class Sensor:
         self.has_new_data=False
         self.recieved_messages=[]
         self.message_to_send=""
+        self.ip=socket.gethostbyname(socket.gethostname())
 
     def __str__(self):
         """
@@ -48,9 +51,10 @@ class Sensor:
     
     #megpróbál küldeni a szervernek
     def try_to_send_data(self, server, data):
+        c = rpyc.connect(server.ip, 9600)
         msg = Message(self.id, self.servers[0].id, data)
-        result = server.receive_data(msg)
-        return  result
+        result = c.root.receive_data(msg)
+        return result
 
     #sorban megpróbál küldeni az összes szervernek
     def send_data(self, data):
@@ -79,4 +83,8 @@ class Sensor:
         else:
             raise Exception("Could not send message to any server.")
     
-    
+
+if __name__ == "__main__":
+    from rpyc.utils.server import ThreadedServer
+    t = ThreadedServer(Sensor(), port=9600)
+    t.start()
