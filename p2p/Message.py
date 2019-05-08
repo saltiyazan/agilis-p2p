@@ -2,11 +2,11 @@
 #ha a szülő szerverhez megy az üzenet akkor azt sajátjaként fogja kezelni a szerver
 #ha egy másik szerverhez megy mint a szülő akkor az a szerver a parent_is_alive flag alapján fogja értelmezni vagy duplikált vagy ideiglenes üzenetként
 class Message:
-    def __init__(self,sensor_id,server_id,content, is_replica=None):
-        self.sensor_id=sensor_id
-        self.parent_server_id=server_id
-        self.is_replica=is_replica
-        self.content=content
+    def __init__(self, sensor_id, server_id, content, is_replica=None):
+        self.sensor_id = sensor_id
+        self.parent_server_id = server_id
+        self.is_replica = is_replica
+        self.content = content
 
     def __str__(self):
         """
