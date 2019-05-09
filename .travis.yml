@@ -15,10 +15,13 @@ jobs:
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - docker build -t p2p-server -f server_Dockerfile .
         - docker build -t p2p-sensor -f sensor_Dockerfile .
+        - docker build -t p2p-registry -f registry_Dockerfile .
         - docker tag p2p-server engedics/p2p-server:latest
         - docker tag p2p-sensor engedics/p2p-sensor:latest
+        - docker tag p2p-registry engedics/p2p-registry:latest
         - docker push engedics/p2p-server:latest
         - docker push engedics/p2p-sensor:latest
+        - docker push engedics/p2p-registry:latest
     - stage: run tests
       install: pip install -r requirements.txt
       name: complex messaging

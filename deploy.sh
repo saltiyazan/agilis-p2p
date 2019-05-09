@@ -1,5 +1,20 @@
 
 #!/usr/bin/env bash
+#create registry network
+docker network create \
+          --driver bridge \
+          --subnet 10.10.10.0/24 \
+          --gateway 10.10.10.1 \
+          registry-net
+
+#create registry server
+docker create --name registry \
+        --publish 18811:18811 \
+        --hostname registry \
+         engedics/p2p-registry
+
+docker start registry
+
 #create networks and containers
 for i in $(seq 1 $1);
 do      
@@ -16,7 +31,6 @@ do
           --publish 10.0.$i.1:9600:9600 \
           engedics/p2p-server
         docker start h$i
-        ping h1 -c 10
 
         #sensors
         for o in $(seq 1 $2);

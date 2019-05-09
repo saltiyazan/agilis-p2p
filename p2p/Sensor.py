@@ -92,3 +92,5 @@ if __name__ == "__main__":
     default_server = ni.gateways()['default'][ni.AF_INET][0]
     c = rpyc.connect(default_server, 9600)
     c.root.addSensor(this.id)
+    this.log('Sensor started: ', this.id)
+    this.log('With default server: ', default_server)

@@ -1,0 +1,16 @@
+FROM python:latest
+
+EXPOSE 18811
+
+RUN mkdir -p /usr/src/registry
+WORKDIR /usr/src/registry
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN mkdir -p p2p
+COPY ./p2p/RegistryServer.py ./p2p/RegistryServer.py
+
+ENV PYTHONPATH=/usr/src/registry:/usr/src/registry/p2p
+
+CMD ["python","./p2p/RegistryServer.py"]

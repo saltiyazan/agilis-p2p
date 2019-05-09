@@ -1,6 +1,7 @@
 from p2p.Message import Message
 from p2p.config import NUM_REPLICAS, LOGGING_ENABLED
 import rpyc
+import rpyc.utils.registry
 import netifaces as ni
 
 
@@ -47,7 +48,7 @@ class StorageServerService(rpyc.Service):
         c.root.redefine_servers(self.id + self.neighbour_servers)
 
     #még csak egyszerűen hozzáadjuk a szomszédok listájához
-    def add_neighbour_server(self, server_id):
+    def exposed_add_neighbour_server(self, server_id):
         if server_id not in self.neighbour_servers:
             self.log('Neighbour server added:', server_id)
             self.neighbour_servers.append(server_id)
@@ -157,7 +158,7 @@ class StorageServerService(rpyc.Service):
             # collect missed data
             for server_id in self.neighbour_servers:
                 c = rpyc.connect(server_id, 9600)
-                c.root.receive_new_server_is_alive(self)
+                c.root.receive_new_server_is_alive(self.id)
 
 
 if __name__ == "__main__":
@@ -165,3 +166,7 @@ if __name__ == "__main__":
     from rpyc.utils.server import ThreadedServer
     t = ThreadedServer(this, port=9600, listener_timeout=600)
     t.start()
+    this.log('Server started: ', this.id)
+    from rpyc.utils.registry import TCPRegistryClient
+    registrar = TCPRegistryClient("10.10.10.1")
+    this.log('Servers so far: ', registrar.discover("StorageServer"))
