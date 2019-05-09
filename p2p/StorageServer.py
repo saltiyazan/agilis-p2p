@@ -52,9 +52,11 @@ class StorageServerService(rpyc.Service):
 
     #még csak egyszerűen hozzáadjuk a szomszédok listájához
     def exposed_add_neighbour_server(self, server_id):
-        if server_id not in self.neighbour_servers:
-            self.log('Neighbour server added:', server_id)
-            self.neighbour_servers.append(server_id)
+        server_ip = server_id.split(".")
+        server_ip = server_ip[0] + "." + server_ip[1] + "." + server_ip[2] + ".1"
+        if server_ip not in self.neighbour_servers:
+            self.log('Neighbour server added:', server_ip)
+            self.neighbour_servers.append(server_ip)
             for sensor_id in self.sensors:
                 try:
                     c = rpyc.connect(sensor_id, 9600)
@@ -186,7 +188,7 @@ def rpyc_start(server_instance):
         if server_id != server_instance.id:
             try:
                 c = rpyc.connect(server_id, 9600)
-                c.root.add_neighbour_server()
+                c.root.add_neighbour_server(server_instance.id)
             except Exception as ex:
                 print("Failed: ", ex)
     #rpyc szerver inditasa
