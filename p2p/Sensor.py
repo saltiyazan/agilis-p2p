@@ -62,7 +62,7 @@ class SensorService(rpyc.Service):
     #sorban megpróbál küldeni az összes szervernek
     def send_data(self, data):
         for server_id in self.servers:
-            self.log('Sending data', data, 'to', server_id)
+            self.log('Sending data ', data, ' to ', server_id)
             success = self.try_to_send_data(server_id, data)
             if not success:
                 self.log('Sending was unsuccessful.')

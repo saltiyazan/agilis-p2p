@@ -57,7 +57,7 @@ class StorageServerService(rpyc.Service):
             self.neighbour_servers.append(server_id)
             for sensor_id in self.sensors:
                 c = rpyc.connect(sensor_id, 9600)
-                c.root.redefine_servers(self.id + self.neighbour_servers)
+                c.root.redefine_servers(self.neighbour_servers.insert(0, self.id))
 
     #megkapja az adatot és eltárolja a megfelelő listában
     def exposed_receive_data(self, msg):
