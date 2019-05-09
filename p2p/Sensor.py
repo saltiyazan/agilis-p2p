@@ -5,6 +5,8 @@ import netifaces as ni
 import logging
 import sys
 import threading
+import random
+import string
 
 
 class SensorService(rpyc.Service):
@@ -85,6 +87,13 @@ class SensorService(rpyc.Service):
                 break
         else:
             raise Exception("Could not send message to any server.")
+
+def random_data():
+    """Generate a random string of letters and digits """
+    threading.Timer(5.0, random_data).start()
+    chars = string.ascii_letters + string.digits
+    data = ''.join(random.choice(chars) for i in range(20))
+    this.send_data(data)
     
 
 def rpyc_start(sensor_instance):
@@ -103,4 +112,5 @@ if __name__ == "__main__":
     c = rpyc.connect(default_server, 9600)
     c.root.add_sensor(this.id)
     this.log('Sensor started!')
+    random_data()
     x.join()

@@ -48,7 +48,7 @@ class StorageServerService(rpyc.Service):
         self.log('Sensor added:', sensor_id)
         self.sensors.append(sensor_id)
         c = rpyc.connect(sensor_id, 9600)
-        c.root.redefine_servers(self.id + self.neighbour_servers)
+        c.root.redefine_servers(self.neighbour_servers.insert(0, self.id))
 
     #még csak egyszerűen hozzáadjuk a szomszédok listájához
     def exposed_add_neighbour_server(self, server_id):
@@ -79,9 +79,9 @@ class StorageServerService(rpyc.Service):
                 if msg.is_replica == True:
                     self.log('Received other data', msg)
                     if msg.parent_server_id not in self.other_data:
-                        self.other_data[msg.parent_server_id]={}
+                        self.other_data[msg.parent_server_id] = {}
                     if msg.sensor_id not in self.other_data[msg.parent_server_id]:
-                        self.other_data[msg.parent_server_id][msg.sensor_id]=[]
+                        self.other_data[msg.parent_server_id][msg.sensor_id] = []
                     if msg.content not in self.other_data[msg.parent_server_id]:
                         self.other_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
                     return True
@@ -89,9 +89,9 @@ class StorageServerService(rpyc.Service):
                 else:
                     self.log('Received dead data', msg)
                     if msg.parent_server_id not in self.dead_servers_data:
-                        self.dead_servers_data[msg.parent_server_id]={}
+                        self.dead_servers_data[msg.parent_server_id] = {}
                     if msg.sensor_id not in self.dead_servers_data[msg.parent_server_id]:
-                        self.dead_servers_data[msg.parent_server_id][msg.sensor_id]=[]
+                        self.dead_servers_data[msg.parent_server_id][msg.sensor_id] = []
                     if msg.content not in self.dead_servers_data[msg.parent_server_id]:
                         self.dead_servers_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
                     self.create_replicas(msg)
@@ -169,10 +169,11 @@ def rpyc_start(server_instance):
     #regisztralas
     from rpyc.utils.registry import TCPRegistryClient
     registrar = TCPRegistryClient("10.10.10.1")
+    registrar.register(port=9600)
     this.log('Registering service, servers so far: ', registrar.discover("StorageServer"))
     #rpyc szerver inditasa
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(server_instance, port=9600, listener_timeout=600, registrar=registrar, logger=logging.getLogger())
+    t = ThreadedServer(server_instance, port=9600, listener_timeout=600, logger=logging.getLogger())
     t.start()
 
 
