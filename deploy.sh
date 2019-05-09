@@ -1,12 +1,5 @@
 
 #!/usr/bin/env bash
-#create registry network
-docker network create \
-          --driver bridge \
-          --subnet 10.10.10.0/24 \
-          --gateway 10.10.10.1 \
-          registry-net
-
 #create registry server
 docker create --name registry \
         --network host \

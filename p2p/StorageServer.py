@@ -13,6 +13,7 @@ class StorageServerService(rpyc.Service):
     def __init__(self, alive):
         self.alive = alive
         self.id = ni.gateways()['default'][ni.AF_INET][0]
+        self.default_gateway = ni.gateways()['default'][ni.AF_INET][0]
         self.data = {}
         self.other_data = {}
         self.sensors = []
@@ -50,14 +51,12 @@ class StorageServerService(rpyc.Service):
         self.send_neighbour_list(sensor_id)
 
     #még csak egyszerűen hozzáadjuk a szomszédok listájához
-    def exposed_add_neighbour_server(self, server_id):
-        server_ip = server_id.split(".")
-        server_ip = server_ip[0] + "." + server_ip[1] + "." + server_ip[2] + ".1"
-        if server_ip not in self.neighbour_servers:
-            self.log('Neighbour server added:', server_ip)
-            self.neighbour_servers.append(server_ip)
-            for sensor_id in self.sensors:
-                self.send_neighbour_list(sensor_id)
+    def exposed_refresh_neighbour_list(self, new_neighbour_list):
+        new_neighbour_list.remove(self.default_gateway)
+        self.neighbour_servers = new_neighbour_list
+        self.log('Refreshed neighbour server list:', self.neighbour_servers)
+        for sensor_id in self.sensors:
+            self.send_neighbour_list(sensor_id)
 
     #sajat id-vel kiegeszitett lista kuldese a szenzornak
     def send_neighbour_list(self, sensor_id):
@@ -67,7 +66,7 @@ class StorageServerService(rpyc.Service):
             c = rpyc.connect(sensor_id, 9600)
             c.root.redefine_servers(neighbour_list)
         except Exception as ex:
-            self.log('RPC failed: ', ex)
+            self.log('RPC failed:', ex)
 
     #megkapja az adatot és eltárolja a megfelelő listában
     def exposed_receive_data(self, msg):
@@ -87,7 +86,7 @@ class StorageServerService(rpyc.Service):
             else:
                 #a szenzőr szülő szervere él akkor azért kapja ez a szerver az adatot hogy duplikáltan tároljuk el az adatot
                 if msg.is_replica == True:
-                    self.log('Received backup data: ', msg)
+                    self.log('Received backup data:', msg)
                     if msg.parent_server_id not in self.other_data:
                         self.other_data[msg.parent_server_id] = {}
                     if msg.sensor_id not in self.other_data[msg.parent_server_id]:
@@ -97,7 +96,7 @@ class StorageServerService(rpyc.Service):
                     return True
                 #a szenzor szülő szervere leállt és ezért kapja ez a szerver az adatot
                 else:
-                    self.log('Received recovery data: ', msg)
+                    self.log('Received recovery data:', msg)
                     if msg.parent_server_id not in self.dead_servers_data:
                         self.dead_servers_data[msg.parent_server_id] = {}
                     if msg.sensor_id not in self.dead_servers_data[msg.parent_server_id]:
@@ -116,10 +115,10 @@ class StorageServerService(rpyc.Service):
                     c = rpyc.connect(server_id, 9600)
                     res = c.root.receive_data(msg)
                 except Exception as ex:
-                    self.log('RPC failed, server is dead: ', server_id)
+                    self.log('RPC failed, server is dead:', server_id)
                 break
         else:
-            raise Exception('Could not find server with id ' + str(server_id))
+            raise Exception('Could not find server with id' + str(server_id))
 
     #ezzel tudja a saját szenzorainak az adatait elküldeni hogy azok duplikálva tárolódjanak
     def send_data_to_duplicate(self, msg):
@@ -164,7 +163,7 @@ class StorageServerService(rpyc.Service):
                 if n_replicas_created == NUM_REPLICAS:
                     break
             except Exception as ex:
-                self.log('RPC failed: ', ex)
+                self.log('RPC failed:', ex)
 
     def change_alive_state(self, alive):
         self.log('Alive state changed to ', alive)
@@ -184,21 +183,9 @@ class StorageServerService(rpyc.Service):
 def rpyc_start(server_instance):
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     #regisztralas
-    default_server = ni.gateways()['default'][ni.AF_INET][0]
     from rpyc.utils.registry import TCPRegistryClient
-    registrar = TCPRegistryClient(ip=default_server)
-    servers = registrar.discover("STORAGESERVER")
-    this.log('Registering service, servers so far: ', servers)
-    for server in servers:
-        server_id = server[0]
-        if server_id != server_instance.id:
-            try:
-                server_ip = server_id.split(".")
-                server_ip = server_ip[0] + "." + server_ip[1] + "." + server_ip[2] + ".1"
-                c = rpyc.connect(server_ip, 9600)
-                c.root.add_neighbour_server(server_instance.id)
-            except Exception as ex:
-                print("Failed: ", ex)
+    registrar = TCPRegistryClient(ip=server_instance.default_gateway)
+    this.log('Registering service')
     #rpyc szerver inditasa
     from rpyc.utils.server import ThreadedServer
     t = ThreadedServer(server_instance, port=9600, listener_timeout=600, registrar=registrar, logger=logging.getLogger())

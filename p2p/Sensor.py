@@ -61,7 +61,7 @@ class SensorService(rpyc.Service):
             msg = Message(self.id, self.servers[0], data)
             result = c.root.receive_data(msg)
         except Exception as ex:
-            self.log('RPC failed: ', ex)
+            self.log('RPC failed:', ex)
             result = False
         return result
 
@@ -92,12 +92,13 @@ class SensorService(rpyc.Service):
         else:
             raise Exception("Could not send message to any server.")
 
-def random_data():
+
+def random_data(sensor_instance):
     """Generate a random string of letters and digits """
-    threading.Timer(5.0, random_data).start()
-    chars = string.ascii_letters + string.digits
-    data = ''.join(random.choice(chars) for i in range(20))
-    this.send_data(data)
+    while True:
+        chars = string.ascii_letters + string.digits
+        data = ''.join(random.choice(chars) for i in range(20))
+        sensor_instance.send_data(data)
     
 
 def rpyc_start(sensor_instance):
@@ -116,5 +117,6 @@ if __name__ == "__main__":
     c = rpyc.connect(default_server, 9600)
     c.root.add_sensor(this.id)
     this.log('Sensor started!')
-    random_data()
+    y = threading.Thread(target=random_data, args=(this,), daemon=True)
+    y.start()
     x.join()
