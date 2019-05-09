@@ -2,6 +2,8 @@ from p2p.Message import Message
 from p2p.config import LOGGING_ENABLED
 import rpyc
 import netifaces as ni
+import logging
+import sys
 
 
 class SensorService(rpyc.Service):
@@ -85,9 +87,10 @@ class SensorService(rpyc.Service):
     
 
 if __name__ == "__main__":
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     this = SensorService()
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(this, port=9600, listener_timeout=600)
+    t = ThreadedServer(this, port=9600, listener_timeout=600, logger=logging.getLogger())
     t.start()
     default_server = ni.gateways()['default'][ni.AF_INET][0]
     c = rpyc.connect(default_server, 9600)
