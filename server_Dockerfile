@@ -10,5 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir -p p2p
 COPY ./p2p/StorageServer.py ./p2p/StorageServer.py
+COPY ./p2p/Message.py ./p2p/Message.py
+COPY ./p2p/config.py ./p2p/config.py
 
 CMD ["python","./p2p/StorageServer.py"]

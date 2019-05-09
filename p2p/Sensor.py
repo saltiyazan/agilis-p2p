@@ -87,7 +87,7 @@ class SensorService(rpyc.Service):
 if __name__ == "__main__":
     this = SensorService()
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(this, port=9600)
+    t = ThreadedServer(this, port=9600, listener_timeout=600)
     t.start()
     default_server = ni.gateways()['default'][ni.AF_INET][0]
     c = rpyc.connect(default_server, 9600)

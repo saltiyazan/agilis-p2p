@@ -163,5 +163,5 @@ class StorageServerService(rpyc.Service):
 if __name__ == "__main__":
     this = StorageServerService(alive=True)
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(this, port=9600)
+    t = ThreadedServer(this, port=9600, listener_timeout=600)
     t.start()
