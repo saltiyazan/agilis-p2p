@@ -1,5 +1,5 @@
-from p2p.Sensor import Sensor
-from p2p.StorageServer import StorageServer
+from p2p.Sensor import SensorService
+from p2p.StorageServer import StorageServerService
 from p2p.Data import Data
 
 def test_dataDuplication():
@@ -11,9 +11,9 @@ def test_dataDuplication():
 
     print(h)
 
-    server = StorageServer(alive=True, id=1)
+    server = StorageServerService(alive=True)
     s_id = 10
-    sensor = Sensor(id=s_id, servers=[server])
+    sensor = SensorService(id=s_id, servers=[server])
     data_ = Data('test data')
 
     sensor.send_data(data=data_)

@@ -52,8 +52,10 @@ class StorageServerService(rpyc.Service):
 
     #még csak egyszerűen hozzáadjuk a szomszédok listájához
     def exposed_refresh_neighbour_list(self, new_neighbour_list):
-        self.neighbour_servers = new_neighbour_list
-        self.neighbour_servers.remove(self.default_gateway)
+        self.neighbour_servers = []
+        for server_id in new_neighbour_list:
+            if server_id != self.default_gateway:
+                self.neighbour_servers.append(server_id)
         self.log('Refreshed neighbour server list:', self.neighbour_servers)
         for sensor_id in self.sensors:
             self.send_neighbour_list(sensor_id)
