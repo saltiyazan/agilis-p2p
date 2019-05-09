@@ -35,6 +35,6 @@ class RegistryServer(rpyc.utils.registry.TCPRegistryServer):
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    this = RegistryServer(logger=logging.getLogger())
+    this = RegistryServer(logger=logging.getLogger(), pruning_timeout=30)
     this.start()
     print("Registry server started!")

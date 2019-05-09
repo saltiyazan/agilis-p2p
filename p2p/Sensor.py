@@ -93,34 +93,39 @@ class SensorService(rpyc.Service):
         else:
             raise Exception("Could not send message to any server.")
 
-
-def random_data(sensor_instance):
-    """Generate a random string of letters and digits """
-    while True:
-        time.sleep(10)
+    def random_data(self):
+        """Generate a random string of letters and digits """
+        #while True:
+        #    time.sleep(10)
         chars = string.ascii_letters + string.digits
         data = ''.join(random.choice(chars) for i in range(20))
-        sensor_instance.send_data(data)
-    #threading.Timer(10, random_data, sensor_instance).start()
+        self.send_data(data)
+            #threading.Timer(10, random_data, sensor_instance).start()
     
 
-def rpyc_start(sensor_instance):
+def generate_data():
+    this.random_data()
+    threading.Timer(10.0, generate_data).start()
+
+
+def rpyc_start():
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(sensor_instance, port=9600, listener_timeout=600, logger=logging.getLogger())
+    t = ThreadedServer(this, port=9600, listener_timeout=600, logger=logging.getLogger())
     t.start()
 
 
 if __name__ == "__main__":
+    #fo peldany letrehozasa es szal inditasa az rpyc szervernek
     this = SensorService()
     x = threading.Thread(target=rpyc_start, args=(this,), daemon=True)
     x.start()
-    default_server = ni.gateways()['default'][ni.AF_INET][0]
-    this.log('Default server: ', default_server)
-    c = rpyc.connect(default_server, 9600)
+    default_gateway = ni.gateways()['default'][ni.AF_INET][0]
+    this.log('Default server: ', default_gateway)
+    c = rpyc.connect(default_gateway, 9600)
     c.root.add_sensor(this.id)
     this.log('Sensor started!')
     #y = threading.Thread(target=random_data, args=(this,), daemon=True)
     #y.start()
-    random_data(this)
+    generate_data()
     x.join()
