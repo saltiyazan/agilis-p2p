@@ -169,7 +169,7 @@ def rpyc_start(server_instance):
     #regisztralas
     from rpyc.utils.registry import TCPRegistryClient
     registrar = TCPRegistryClient("10.10.10.1")
-    registrar.register(port=9600)
+    registrar.register(aliases=["STORAGESERVER", "SERVER"], port=9600)
     this.log('Registering service, servers so far: ', registrar.discover("StorageServer"))
     #rpyc szerver inditasa
     from rpyc.utils.server import ThreadedServer
