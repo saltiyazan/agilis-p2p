@@ -164,21 +164,21 @@ class StorageServerService(rpyc.Service):
                 c.root.receive_new_server_is_alive(self.id)
 
 
-def rpyc_start():
+def rpyc_start(server_instance):
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     #regisztralas
     from rpyc.utils.registry import TCPRegistryClient
     registrar = TCPRegistryClient("10.10.10.1")
     this.log('Registering service, servers so far: ', registrar.discover("StorageServer"))
     #rpyc szerver inditasa
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(this, port=9600, listener_timeout=600, registrar=registrar, logger=logging.getLogger())
+    t = ThreadedServer(server_instance, port=9600, listener_timeout=600, registrar=registrar, logger=logging.getLogger())
     t.start()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     this = StorageServerService(alive=True)
-    x = threading.Thread(target=rpyc_start, daemon=True)
+    x = threading.Thread(target=rpyc_start, args=(this,), daemon=True)
     x.start()
-    this.log('Server started: ', this.id)
-
+    this.log('Server started!')
+    x.join()
