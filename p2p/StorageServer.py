@@ -63,7 +63,10 @@ class StorageServerService(rpyc.Service):
     #sajat id-vel kiegeszitett lista kuldese a szenzornak
     def send_neighbour_list(self, sensor_id):
         neighbour_list = self.neighbour_servers
-        neighbour_list.insert(0, self.id)
+        if len(neighbour_list) == 0:
+            neighbour_list.append(self.id)
+        else:
+            neighbour_list.insert(0, self.id)
         try:
             c = rpyc.connect(sensor_id, 9600)
             c.root.redefine_servers(neighbour_list)

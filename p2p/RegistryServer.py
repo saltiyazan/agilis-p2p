@@ -1,6 +1,8 @@
 import rpyc.utils.registry
 import logging
 import sys
+import time
+import threading
 
 
 class RegistryServer(rpyc.utils.registry.TCPRegistryServer):
@@ -31,6 +33,20 @@ class RegistryServer(rpyc.utils.registry.TCPRegistryServer):
                 c.root.refresh_neighbour_list(new_neighbour_list)
             except Exception as ex:
                 print("Failed RPC: ", ex)
+
+    def remove_stale(self, name):
+        oldest = time.time() - self.pruning_timeout
+        all_servers = sorted(self.services[name].items(), key=lambda x: x[1])
+        servers = []
+        for addrinfo, t in all_servers:
+            if t < oldest:
+                self.logger.debug("discarding stale %s:%s", *addrinfo)
+                self._remove_service(name, addrinfo)
+
+
+def check_stale():
+    this.remove_stale("STORAGESERVER")
+    threading.Timer(5.0, check_stale).start()
 
 
 if __name__ == "__main__":

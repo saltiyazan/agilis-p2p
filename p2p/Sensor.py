@@ -108,10 +108,10 @@ def generate_data():
     threading.Timer(10.0, generate_data).start()
 
 
-def rpyc_start():
+def rpyc_start(sensor_instance):
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(this, port=9600, listener_timeout=600, logger=logging.getLogger())
+    t = ThreadedServer(sensor_instance, port=9600, listener_timeout=600, logger=logging.getLogger())
     t.start()
 
 
