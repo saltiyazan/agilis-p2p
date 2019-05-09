@@ -9,7 +9,8 @@ docker network create \
 
 #create registry server
 docker create --name registry \
-        --publish 18811:18811 \
+        --network registry-net \
+        --publish 10.10.10.1:18811:18811 \
         --hostname registry \
          engedics/p2p-registry
 

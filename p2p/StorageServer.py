@@ -3,6 +3,8 @@ from p2p.config import NUM_REPLICAS, LOGGING_ENABLED
 import rpyc
 import rpyc.utils.registry
 import netifaces as ni
+import logging
+import sys
 
 
 class StorageServerService(rpyc.Service):
@@ -162,9 +164,10 @@ class StorageServerService(rpyc.Service):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     this = StorageServerService(alive=True)
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(this, port=9600, listener_timeout=600)
+    t = ThreadedServer(this, port=9600, listener_timeout=600, logger=logging.getLogger())
     t.start()
     this.log('Server started: ', this.id)
     from rpyc.utils.registry import TCPRegistryClient
