@@ -47,8 +47,7 @@ class StorageServerService(rpyc.Service):
     def exposed_add_sensor(self, sensor_id):
         self.log('Sensor added:', sensor_id)
         self.sensors.append(sensor_id)
-        c = rpyc.connect(sensor_id, 9600)
-        c.root.redefine_servers(self.neighbour_servers.insert(0, self.id))
+        self.send_neighbour_list(sensor_id)
 
     #még csak egyszerűen hozzáadjuk a szomszédok listájához
     def exposed_add_neighbour_server(self, server_id):
@@ -58,11 +57,17 @@ class StorageServerService(rpyc.Service):
             self.log('Neighbour server added:', server_ip)
             self.neighbour_servers.append(server_ip)
             for sensor_id in self.sensors:
-                try:
-                    c = rpyc.connect(sensor_id, 9600)
-                    c.root.redefine_servers(self.neighbour_servers.insert(0, self.id))
-                except Exception as ex:
-                    self.log('RPC failed: ', ex)
+                self.send_neighbour_list(sensor_id)
+
+    #sajat id-vel kiegeszitett lista kuldese a szenzornak
+    def send_neighbour_list(self, sensor_id):
+        neighbour_list = self.neighbour_servers
+        neighbour_list.insert(0, self.id)
+        try:
+            c = rpyc.connect(sensor_id, 9600)
+            c.root.redefine_servers(neighbour_list)
+        except Exception as ex:
+            self.log('RPC failed: ', ex)
 
     #megkapja az adatot és eltárolja a megfelelő listában
     def exposed_receive_data(self, msg):
@@ -82,7 +87,7 @@ class StorageServerService(rpyc.Service):
             else:
                 #a szenzőr szülő szervere él akkor azért kapja ez a szerver az adatot hogy duplikáltan tároljuk el az adatot
                 if msg.is_replica == True:
-                    self.log('Received other data', msg)
+                    self.log('Received backup data: ', msg)
                     if msg.parent_server_id not in self.other_data:
                         self.other_data[msg.parent_server_id] = {}
                     if msg.sensor_id not in self.other_data[msg.parent_server_id]:
@@ -92,7 +97,7 @@ class StorageServerService(rpyc.Service):
                     return True
                 #a szenzor szülő szervere leállt és ezért kapja ez a szerver az adatot
                 else:
-                    self.log('Received dead data', msg)
+                    self.log('Received recovery data: ', msg)
                     if msg.parent_server_id not in self.dead_servers_data:
                         self.dead_servers_data[msg.parent_server_id] = {}
                     if msg.sensor_id not in self.dead_servers_data[msg.parent_server_id]:
@@ -188,7 +193,9 @@ def rpyc_start(server_instance):
         server_id = server[0]
         if server_id != server_instance.id:
             try:
-                c = rpyc.connect(server_id, 9600)
+                server_ip = server_id.split(".")
+                server_ip = server_ip[0] + "." + server_ip[1] + "." + server_ip[2] + ".1"
+                c = rpyc.connect(server_ip, 9600)
                 c.root.add_neighbour_server(server_instance.id)
             except Exception as ex:
                 print("Failed: ", ex)
