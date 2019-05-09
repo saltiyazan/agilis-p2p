@@ -13,4 +13,6 @@ COPY ./p2p/StorageServer.py ./p2p/StorageServer.py
 COPY ./p2p/Message.py ./p2p/Message.py
 COPY ./p2p/config.py ./p2p/config.py
 
+ENV PYTHONPATH=/usr/src/sensor:/usr/src/sensor/p2p
+
 CMD ["python","./p2p/StorageServer.py"]
