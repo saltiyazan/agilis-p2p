@@ -56,9 +56,13 @@ class SensorService(rpyc.Service):
     
     #megpróbál küldeni a szervernek
     def try_to_send_data(self, server_id, data):
-        c = rpyc.connect(server_id, 9600)
-        msg = Message(self.id, self.servers[0], data)
-        result = c.root.receive_data(msg)
+        try:
+            c = rpyc.connect(server_id, 9600)
+            msg = Message(self.id, self.servers[0], data)
+            result = c.root.receive_data(msg)
+        except Exception as ex:
+            self.log('RPC failed: ', ex)
+            result = False
         return result
 
     #sorban megpróbál küldeni az összes szervernek

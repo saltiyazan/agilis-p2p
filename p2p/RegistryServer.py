@@ -7,10 +7,13 @@ class RegistryServer(rpyc.utils.registry.TCPRegistryServer):
 
     def on_service_added(self, name, addrinfo):
         print(addrinfo)
+        print(self.services)
         for server_id in self.services[name]:
-            print(self.services[name])
-            c = rpyc.connect(server_id, 9600)
-            c.root.add_neighbour_server(addrinfo)
+            try:
+                c = rpyc.connect(server_id, 9600)
+                c.root.add_neighbour_server(addrinfo)
+            except Exception as ex:
+                print("Failed: ", ex)
 
 
 if __name__ == "__main__":

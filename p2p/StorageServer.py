@@ -56,8 +56,11 @@ class StorageServerService(rpyc.Service):
             self.log('Neighbour server added:', server_id)
             self.neighbour_servers.append(server_id)
             for sensor_id in self.sensors:
-                c = rpyc.connect(sensor_id, 9600)
-                c.root.redefine_servers(self.neighbour_servers.insert(0, self.id))
+                try:
+                    c = rpyc.connect(sensor_id, 9600)
+                    c.root.redefine_servers(self.neighbour_servers.insert(0, self.id))
+                except Exception as ex:
+                    self.log('RPC failed: ', ex)
 
     #megkapja az adatot és eltárolja a megfelelő listában
     def exposed_receive_data(self, msg):
@@ -102,10 +105,11 @@ class StorageServerService(rpyc.Service):
     def send_msg(self, server_id, msg):
         for nei_server_id in self.neighbour_servers:
             if nei_server_id == server_id:
-                c = rpyc.connect(server_id, 9600)
-                res = c.root.receive_data(msg)
-                if not res:
-                    raise Exception(server_id + 'server is dead')
+                try:
+                    c = rpyc.connect(server_id, 9600)
+                    res = c.root.receive_data(msg)
+                except Exception as ex:
+                    self.log('RPC failed, server is dead: ', server_id)
                 break
         else:
             raise Exception('Could not find server with id ' + str(server_id))
@@ -146,11 +150,14 @@ class StorageServerService(rpyc.Service):
         # ha nem nekunk jott az adat eredetileg, akkor a sajat szerver nem aktiv
         msg.is_replica = True
         for server_id in self.neighbour_servers:
-            c = rpyc.connect(server_id, 9600)
-            if c.root.receive_data(msg):
-                n_replicas_created += 1
-            if n_replicas_created == NUM_REPLICAS:
-                break
+            try:
+                c = rpyc.connect(server_id, 9600)
+                if c.root.receive_data(msg):
+                    n_replicas_created += 1
+                if n_replicas_created == NUM_REPLICAS:
+                    break
+            except Exception as ex:
+                self.log('RPC failed: ', ex)
 
     def change_alive_state(self, alive):
         self.log('Alive state changed to ', alive)
@@ -160,16 +167,20 @@ class StorageServerService(rpyc.Service):
             self.alive = True
             # collect missed data
             for server_id in self.neighbour_servers:
-                c = rpyc.connect(server_id, 9600)
-                c.root.receive_new_server_is_alive(self.id)
+                try:
+                    c = rpyc.connect(server_id, 9600)
+                    c.root.receive_new_server_is_alive(self.id)
+                except Exception as ex:
+                    self.log('RPC failed:', ex)
 
 
 def rpyc_start(server_instance):
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     #regisztralas
     from rpyc.utils.registry import TCPRegistryClient
-    registrar = TCPRegistryClient("10.10.10.1")
-    registrar.register(aliases=["STORAGESERVER", "SERVER"], port=9600)
+    registrar = TCPRegistryClient(ip="10.10.10.1")
+    aliases = ["Server"]
+    registrar.register(aliases=aliases, port=9600)
     this.log('Registering service, servers so far: ', registrar.discover("StorageServer"))
     #rpyc szerver inditasa
     from rpyc.utils.server import ThreadedServer
