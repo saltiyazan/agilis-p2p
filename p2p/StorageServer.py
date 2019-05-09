@@ -177,8 +177,9 @@ class StorageServerService(rpyc.Service):
 def rpyc_start(server_instance):
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     #regisztralas
+    default_server = ni.gateways()['default'][ni.AF_INET][0]
     from rpyc.utils.registry import TCPRegistryClient
-    registrar = TCPRegistryClient(ip="10.10.10.1")
+    registrar = TCPRegistryClient(ip=default_server)
     servers = registrar.discover("STORAGESERVER")
     this.log('Registering service, servers so far: ', servers)
     for server_id in servers:
