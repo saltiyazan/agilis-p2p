@@ -6,7 +6,9 @@ import sys
 class RegistryServer(rpyc.utils.registry.TCPRegistryServer):
 
     def on_service_added(self, name, addrinfo):
+        print("Adding server: " + addrinfo)
         for server_id in self.services[name]:
+            print(self.services[name])
             c = rpyc.connect(server_id, 9600)
             c.root.add_neighbour_server(addrinfo)
 
