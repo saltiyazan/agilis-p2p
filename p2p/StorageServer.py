@@ -184,7 +184,8 @@ def rpyc_start(server_instance):
     registrar = TCPRegistryClient(ip=default_server)
     servers = registrar.discover("STORAGESERVER")
     this.log('Registering service, servers so far: ', servers)
-    for server_id in servers:
+    for server in servers:
+        server_id = server[0]
         if server_id != server_instance.id:
             try:
                 c = rpyc.connect(server_id, 9600)
