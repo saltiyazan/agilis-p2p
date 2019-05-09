@@ -5,6 +5,7 @@ import rpyc.utils.registry
 import netifaces as ni
 import logging
 import sys
+import threading
 
 
 class StorageServerService(rpyc.Service):
@@ -163,13 +164,21 @@ class StorageServerService(rpyc.Service):
                 c.root.receive_new_server_is_alive(self.id)
 
 
+def rpyc_start():
+    #regisztralas
+    from rpyc.utils.registry import TCPRegistryClient
+    registrar = TCPRegistryClient("10.10.10.1")
+    this.log('Registering service, servers so far: ', registrar.discover("StorageServer"))
+    #rpyc szerver inditasa
+    from rpyc.utils.server import ThreadedServer
+    t = ThreadedServer(this, port=9600, listener_timeout=600, registrar=registrar, logger=logging.getLogger())
+    t.start()
+
+
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     this = StorageServerService(alive=True)
-    from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(this, port=9600, listener_timeout=600, logger=logging.getLogger())
-    t.start()
+    x = threading.Thread(target=rpyc_start, daemon=True)
+    x.start()
     this.log('Server started: ', this.id)
-    from rpyc.utils.registry import TCPRegistryClient
-    registrar = TCPRegistryClient("10.10.10.1")
-    this.log('Servers so far: ', registrar.discover("StorageServer"))
+

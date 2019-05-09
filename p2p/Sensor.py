@@ -4,6 +4,7 @@ import rpyc
 import netifaces as ni
 import logging
 import sys
+import threading
 
 
 class SensorService(rpyc.Service):
@@ -86,12 +87,16 @@ class SensorService(rpyc.Service):
             raise Exception("Could not send message to any server.")
     
 
-if __name__ == "__main__":
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    this = SensorService()
+def rpyc_start():
     from rpyc.utils.server import ThreadedServer
     t = ThreadedServer(this, port=9600, listener_timeout=600, logger=logging.getLogger())
     t.start()
+
+if __name__ == "__main__":
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    this = SensorService()
+    x = threading.Thread(target=rpyc_start, daemon=True)
+    x.start()
     default_server = ni.gateways()['default'][ni.AF_INET][0]
     c = rpyc.connect(default_server, 9600)
     c.root.addSensor(this.id)
