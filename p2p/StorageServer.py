@@ -179,12 +179,18 @@ def rpyc_start(server_instance):
     #regisztralas
     from rpyc.utils.registry import TCPRegistryClient
     registrar = TCPRegistryClient(ip="10.10.10.1")
-    aliases = ["Server"]
-    registrar.register(aliases=aliases, port=9600)
-    this.log('Registering service, servers so far: ', registrar.discover("StorageServer"))
+    servers = registrar.discover("STORAGESERVER")
+    this.log('Registering service, servers so far: ', servers)
+    for server_id in servers:
+        if server_id != server_instance.id:
+            try:
+                c = rpyc.connect(server_id, 9600)
+                c.root.add_neighbour_server()
+            except Exception as ex:
+                print("Failed: ", ex)
     #rpyc szerver inditasa
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(server_instance, port=9600, listener_timeout=600, logger=logging.getLogger())
+    t = ThreadedServer(server_instance, port=9600, listener_timeout=600, registrar=registrar, logger=logging.getLogger())
     t.start()
 
 
