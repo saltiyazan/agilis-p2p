@@ -95,10 +95,10 @@ class SensorService(rpyc.Service):
 
 def random_data(sensor_instance):
     """Generate a random string of letters and digits """
-    while True:
-        chars = string.ascii_letters + string.digits
-        data = ''.join(random.choice(chars) for i in range(20))
-        sensor_instance.send_data(data)
+    chars = string.ascii_letters + string.digits
+    data = ''.join(random.choice(chars) for i in range(20))
+    sensor_instance.send_data(data)
+    threading.Timer(10, random_data, sensor_instance).start()
     
 
 def rpyc_start(sensor_instance):
@@ -117,6 +117,7 @@ if __name__ == "__main__":
     c = rpyc.connect(default_server, 9600)
     c.root.add_sensor(this.id)
     this.log('Sensor started!')
-    y = threading.Thread(target=random_data, args=(this,), daemon=True)
-    y.start()
+    #y = threading.Thread(target=random_data, args=(this,), daemon=True)
+    #y.start()
+    random_data(this)
     x.join()
