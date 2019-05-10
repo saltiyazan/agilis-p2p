@@ -58,7 +58,7 @@ def check_stale():
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    this = RegistryServer(logger=logging.getLogger(), pruning_timeout=30)
+    this = RegistryServer(logger=logging.getLogger(), pruning_timeout=60)
     check_stale()
     this.start()
     print("Registry server started!")
