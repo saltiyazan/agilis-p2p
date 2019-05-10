@@ -46,7 +46,7 @@ class SensorService(rpyc.Service):
     #megpróbál küldeni a szervernek
     def try_to_send_data(self, server_id, data):
         try:
-            msg = Message(self.id, self.servers[0], data)
+            msg = Message(self.id, self.default_gateway, data, False)
             conn = rpyc.connect(server_id, 9600)
             result = conn.root.receive_data(msg)
         except Exception as ex:
@@ -64,9 +64,9 @@ class SensorService(rpyc.Service):
             #utana a tobbieknek
             for server_id in self.servers:
                 self.log('Sending recovery data ', data, ' to ', server_id)
-                if self.try_to_send_data(self.default_gateway, data):
+                if self.try_to_send_data(server_id, data):
                     break
-            threading.Timer(5.0, self.send_data).start()
+        threading.Timer(10.0, self.send_data).start()
 
     def random_data(self):
         """Generate a random string of letters and digits """
@@ -74,7 +74,7 @@ class SensorService(rpyc.Service):
         data = ''.join(random.choice(chars) for i in range(20))
         this.log('Generated data:', data)
         self.new_data.append(data)
-        threading.Timer(10.0, self.random_data).start()
+        threading.Timer(30.0, self.random_data).start()
 
 
 def rpyc_start(sensor_instance):

@@ -54,20 +54,18 @@ class StorageServerService(rpyc.Service):
         for server_id in new_neighbour_list:
             if server_id != self.default_gateway:
                 self.neighbour_servers.append(server_id)
+        self.send_neighbour_list()
         self.log('Refreshed neighbour server list:', self.neighbour_servers)
 
     #sajat id-vel kiegeszitett lista kuldese a szenzornak
     def send_neighbour_list(self):
         for sensor_id in self.sensors:
-            neighbour_list = self.neighbour_servers
-            neighbour_list.insert(0, self.id)
             try:
                 self.log('Sending neighbour list to:', sensor_id)
                 c = rpyc.connect(sensor_id, 9600)
-                c.root.redefine_servers(neighbour_list)
+                c.root.redefine_servers(self.neighbour_servers)
             except Exception as ex:
                 self.log('Neighbour list sending failed to:', sensor_id)
-            threading.Timer(10.0, self.send_neighbour_list).start()
 
     #megkapja az adatot és eltárolja a megfelelő listában
     def exposed_receive_data(self, msg):
@@ -116,7 +114,7 @@ class StorageServerService(rpyc.Service):
     def send_replicas(self):
         for server_id in self.neighbour_servers:
             for sensor_id in self.data.keys():
-                msg = Message(sensor_id, self.id, self.data[sensor_id], True)
+                msg = Message(sensor_id, self.default_gateway, self.data[sensor_id], True)
                 self.send_message(server_id, msg)
         threading.Timer(30.0, self.send_replicas).start()
 
@@ -164,6 +162,6 @@ if __name__ == "__main__":
     x = threading.Thread(target=rpyc_start, args=(this,), daemon=True)
     x.start()
     this.log('Server started!')
-    this.send_neighbour_list()
     this.send_replicas()
+    this.send_recoveries()
     x.join()
