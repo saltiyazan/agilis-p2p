@@ -57,14 +57,17 @@ class SensorService(rpyc.Service):
 
     #sorban megpróbál küldeni az összes szervernek
     def send_data(self):
-        for data in self.new_data:
+        sending_data = self.new_data
+        for data in sending_data:
             #sajat szervernek probalja eloszor
             if self.try_to_send_data(self.default_gateway, data):
+                self.new_data.remove(data)
                 continue
             #utana a tobbieknek
             for server_id in self.servers:
                 self.log('Sending recovery data ', data, ' to ', server_id)
                 if self.try_to_send_data(server_id, data):
+                    self.new_data.remove(data)
                     break
         threading.Timer(10.0, self.send_data).start()
 
