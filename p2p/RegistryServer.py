@@ -35,17 +35,20 @@ class RegistryServer(rpyc.utils.registry.TCPRegistryServer):
                 print("Failed RPC: ", ex)
 
     def remove_stale(self, name):
-        self.logger.debug("checking stales")
-        oldest = time.time() - self.pruning_timeout
-        print(oldest)
-        all_servers = sorted(self.services[name].items(), key=lambda x: x[1])
-        servers = []
-        for addrinfo, t in all_servers:
-            self.logger.debug("checking stale %s:%s", *addrinfo)
-            print(t)
-            if t < oldest:
-                self.logger.debug("discarding stale %s:%s", *addrinfo)
-                self._remove_service(name, addrinfo)
+        try:
+            self.logger.debug("checking stales")
+            oldest = time.time() - self.pruning_timeout
+            print(oldest)
+            all_servers = sorted(self.services[name].items(), key=lambda x: x[1])
+            servers = []
+            for addrinfo, t in all_servers:
+                self.logger.debug("checking stale %s:%s", *addrinfo)
+                print(t)
+                if t < oldest:
+                    self.logger.debug("discarding stale %s:%s", *addrinfo)
+                    self._remove_service(name, addrinfo)
+        except Exception as ex:
+            print(ex)
 
 
 def check_stale():

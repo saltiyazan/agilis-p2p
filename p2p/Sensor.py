@@ -68,18 +68,22 @@ class SensorService(rpyc.Service):
 
     #sorban megpróbál küldeni az összes szervernek
     def send_data(self, data):
-        success = False
-        while not success:
-            for server_id in self.servers:
-                self.log('Sending data ', data, ' to ', server_id)
-                success = self.try_to_send_data(server_id, data)
-                if not success:
-                    self.log('Sending was unsuccessful.')
-                if success:
-                    break
-            else:
-                self.log('Could not send data to any server.')
-                time.sleep(10)
+        try:
+            success = False
+            while not success:
+                for server_id in self.servers:
+                    self.log('Sending data ', data, ' to ', server_id)
+                    success = self.try_to_send_data(server_id, data)
+                    if not success:
+                        self.log('Sending was unsuccessful.')
+                    if success:
+                        break
+                else:
+                    self.log('Could not send data to any server.')
+                    time.sleep(10)
+        except Exception as ex:
+            self.log('Unsuccessful sending, retrying')
+            time.sleep(10)
     
     def receive_msg(self, message):
         self.log('Received message', message)
@@ -97,13 +101,10 @@ class SensorService(rpyc.Service):
 
     def random_data(self):
         """Generate a random string of letters and digits """
-        #while True:
-        #    time.sleep(10)
         chars = string.ascii_letters + string.digits
         data = ''.join(random.choice(chars) for i in range(20))
         print(data)
         self.send_data(data)
-            #threading.Timer(10, random_data, sensor_instance).start()
     
 
 def generate_data():
@@ -128,7 +129,5 @@ if __name__ == "__main__":
     c = rpyc.connect(default_gateway, 9600)
     c.root.add_sensor(this.id)
     this.log('Sensor started!')
-    #y = threading.Thread(target=random_data, args=(this,), daemon=True)
-    #y.start()
     generate_data()
     x.join()
