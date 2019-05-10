@@ -108,7 +108,6 @@ class StorageServerService(rpyc.Service):
                         self.recovery_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
                     self.create_replicas(msg)
                     #return True
-        threading.Timer(10.0, self.process_queue).start()
 
     #uzenet kuldese masik szervernek
     def send_message(self, server_id, msg):
@@ -155,6 +154,11 @@ class StorageServerService(rpyc.Service):
                 break
 
 
+def manage_queue():
+    this.process_queue()
+    threading.Timer(10.0, manage_queue).start()
+
+
 def rpyc_start(server_instance):
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     #regisztralas
@@ -174,5 +178,5 @@ if __name__ == "__main__":
     this.log('Server started!')
     this.send_replicas()
     this.send_recoveries()
-    this.process_queue()
+    manage_queue()
     x.join()
