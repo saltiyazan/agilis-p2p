@@ -69,7 +69,8 @@ class StorageServerService(rpyc.Service):
             except Exception as ex:
                 self.log('Neighbour list sending failed to:', sensor_id)
 
-    def exposed_receive_data(self, msg):
+    def exposed_receive_data(self, sensor_id, server_id, data, is_replica):
+        msg = Message(sensor_id, server_id, data, is_replica)
         self.queue.append(msg)
         return True
 
@@ -116,7 +117,7 @@ class StorageServerService(rpyc.Service):
     def send_message(self, server_id, msg):
         try:
             c = rpyc.connect(server_id, 9600)
-            return c.root.receive_data(msg)
+            return c.root.receive_data(msg.sensor_id, msg.parent_server_id, msg.content, msg.is_replica)
         except Exception:
             self.log('RPC failed, server is dead:', server_id)
 
@@ -174,6 +175,10 @@ if __name__ == "__main__":
     x = threading.Thread(target=rpyc_start, args=(this,), daemon=True)
     x.start()
     this.log('Server started!')
-    this.send_replicas()
-    this.send_recoveries()
-    this.process_queue()
+    rep = threading.Thread(target=this.send_replicas, daemon=True)
+    rep.start()
+    rec = threading.Thread(target=this.send_recoveries, daemon=True)
+    rec.start()
+    prc = threading.Thread(target=this.process_queue, daemon=True)
+    prc.start()
+    x.join()

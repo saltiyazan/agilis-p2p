@@ -48,7 +48,7 @@ class SensorService(rpyc.Service):
             msg = Message(self.id, self.default_gateway, data, False)
             self.log('Sending message to ' + server_id + ':', msg)
             conn = rpyc.connect(server_id, 9600)
-            conn.root.receive_data(msg)
+            conn.root.receive_data(self.id, self.default_gateway, data, False)
             return True
         except Exception as ex:
             self.log('RPC failed:', ex)
@@ -93,5 +93,8 @@ if __name__ == "__main__":
     c = rpyc.connect(this.default_gateway, 9600)
     c.root.add_sensor(this.id)
     this.log('Sensor started!')
-    this.random_data()
-    this.send_data()
+    ran = threading.Thread(target=this.random_data, daemon=True)
+    ran.start()
+    snd = threading.Thread(target=this.send_data, daemon=True)
+    snd.start()
+    x.join()
