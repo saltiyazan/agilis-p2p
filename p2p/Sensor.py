@@ -95,4 +95,3 @@ if __name__ == "__main__":
     this.log('Sensor started!')
     this.random_data()
     this.send_data()
-    x.join()
