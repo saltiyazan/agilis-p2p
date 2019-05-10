@@ -13,11 +13,9 @@ import time
 class SensorService(rpyc.Service):
     def __init__(self):
         self.id = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
+        self.default_gateway = ni.gateways()['default'][ni.AF_INET][0]
         self.servers = []
         self.new_data = []
-        self.has_new_data = False
-        self.received_messages = []
-        self.message_to_send = ""
 
     def __str__(self):
         """
@@ -45,77 +43,44 @@ class SensorService(rpyc.Service):
         self.log('New server list:', servers_array)
         self.servers = servers_array
     
-    #kikeresi a küldendő adatot a meglévő még nem küldött adatok kozül
-    def search_data_to_send(self, data):
-        for d in self.new_data:
-            if data == d:
-                data_to_send = data
-                break
-        else:
-            raise Exception(data + " sensor has not the excepted data in new data.")
-        return data_to_send
-    
     #megpróbál küldeni a szervernek
     def try_to_send_data(self, server_id, data):
         try:
-            c = rpyc.connect(server_id, 9600, keepalive=True)
             msg = Message(self.id, self.servers[0], data)
-            result = c.root.receive_data(msg)
+            conn = rpyc.connect(server_id, 9600)
+            result = conn.root.receive_data(msg)
         except Exception as ex:
             self.log('RPC failed:', ex)
             result = False
         return result
 
     #sorban megpróbál küldeni az összes szervernek
-    def send_data(self, data):
-        try:
-            success = False
-            while not success:
-                for server_id in self.servers:
-                    self.log('Sending data ', data, ' to ', server_id)
-                    success = self.try_to_send_data(server_id, data)
-                    if not success:
-                        self.log('Sending was unsuccessful.')
-                    if success:
-                        break
-                else:
-                    self.log('Could not send data to any server.')
-                    time.sleep(10)
-        except Exception as ex:
-            self.log('Unsuccessful sending, retrying')
-            time.sleep(10)
-    
-    def receive_msg(self, message):
-        self.log('Received message', message)
-        self.received_messages.__add__(message)
-
-    #üzenetküldés próbája az összes szerver felé
-    def send_message(self, message):
-        for server_id in self.servers:
-            self.log('Sending message ', message, ' to ', server_id)
-            success = self.try_to_send_data(server_id, message)
-            if success:
-                break
-        else:
-            raise Exception("Could not send message to any server.")
+    def send_data(self):
+        for data in self.new_data:
+            #sajat szervernek probalja eloszor
+            self.log('Sending data ', data)
+            if self.try_to_send_data(self.default_gateway, data):
+                continue
+            #utana a tobbieknek
+            for server_id in self.servers:
+                self.log('Sending recovery data ', data, ' to ', server_id)
+                if self.try_to_send_data(self.default_gateway, data):
+                    break
+            threading.Timer(5.0, self.send_data).start()
 
     def random_data(self):
         """Generate a random string of letters and digits """
         chars = string.ascii_letters + string.digits
         data = ''.join(random.choice(chars) for i in range(20))
-        print(data)
-        self.send_data(data)
-    
-
-def generate_data():
-    this.random_data()
-    threading.Timer(10.0, generate_data).start()
+        this.log('Generated data:', data)
+        self.new_data.append(data)
+        threading.Timer(10.0, self.random_data).start()
 
 
 def rpyc_start(sensor_instance):
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     from rpyc.utils.server import ThreadedServer
-    t = ThreadedServer(sensor_instance, port=9600, listener_timeout=600, logger=logging.getLogger())
+    t = ThreadedServer(sensor_instance, port=9600, listener_timeout=60, logger=logging.getLogger())
     t.start()
 
 
@@ -124,10 +89,10 @@ if __name__ == "__main__":
     this = SensorService()
     x = threading.Thread(target=rpyc_start, args=(this,), daemon=True)
     x.start()
-    default_gateway = ni.gateways()['default'][ni.AF_INET][0]
-    this.log('Default server: ', default_gateway)
-    c = rpyc.connect(default_gateway, 9600)
+    this.log('Default server:', this.default_gateway)
+    c = rpyc.connect(this.default_gateway, 9600)
     c.root.add_sensor(this.id)
     this.log('Sensor started!')
-    generate_data()
+    this.random_data()
+    this.send_data()
     x.join()
