@@ -60,10 +60,7 @@ class StorageServerService(rpyc.Service):
     def send_neighbour_list(self):
         for sensor_id in self.sensors:
             neighbour_list = self.neighbour_servers
-            if len(neighbour_list) == 0:
-                neighbour_list.append(self.id)
-            else:
-                neighbour_list.insert(0, self.id)
+            neighbour_list.insert(0, self.id)
             try:
                 self.log('Sending neighbour list to:', sensor_id)
                 c = rpyc.connect(sensor_id, 9600)

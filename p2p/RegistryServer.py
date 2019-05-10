@@ -27,6 +27,7 @@ class RegistryServer(rpyc.utils.registry.TCPRegistryServer):
             server_ip = server[0].split(".")
             server_ip = server_ip[0] + "." + server_ip[1] + "." + server_ip[2] + ".1"
             new_neighbour_list.append(server_ip)
+        print(new_neighbour_list)
         for server_id in new_neighbour_list:
             try:
                 c = rpyc.connect(server_id, 9600)
@@ -38,12 +39,9 @@ class RegistryServer(rpyc.utils.registry.TCPRegistryServer):
         try:
             self.logger.debug("checking stales")
             oldest = time.time() - self.pruning_timeout
-            print(oldest)
             all_servers = sorted(self.services[name].items(), key=lambda x: x[1])
-            servers = []
             for addrinfo, t in all_servers:
                 self.logger.debug("checking stale %s:%s", *addrinfo)
-                print(t)
                 if t < oldest:
                     self.logger.debug("discarding stale %s:%s", *addrinfo)
                     self._remove_service(name, addrinfo)
@@ -58,7 +56,7 @@ def check_stale():
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    this = RegistryServer(logger=logging.getLogger(), pruning_timeout=60)
+    this = RegistryServer(logger=logging.getLogger(), pruning_timeout=65)
     check_stale()
     this.start()
     print("Registry server started!")
