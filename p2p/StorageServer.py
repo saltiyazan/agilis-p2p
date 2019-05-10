@@ -13,6 +13,7 @@ class StorageServerService(rpyc.Service):
     def __init__(self):
         self.id = ni.gateways()['default'][ni.AF_INET][0]
         self.default_gateway = ni.gateways()['default'][ni.AF_INET][0]
+        self.queue = []
         self.data = {}
         self.backup_data = {}
         self.recovery_data = {}
@@ -67,40 +68,47 @@ class StorageServerService(rpyc.Service):
             except Exception as ex:
                 self.log('Neighbour list sending failed to:', sensor_id)
 
-    #megkapja az adatot és eltárolja a megfelelő listában
     def exposed_receive_data(self, msg):
-        #saját szenzortól jön az adat
-        if msg.parent_server_id == self.id:
-            self.log('Received own data:', msg)
-            if msg.sensor_id not in self.data:
-                self.data[msg.sensor_id] = []
-            if msg.content not in self.data[msg.sensor_id]:
-                self.data[msg.sensor_id].append(msg.content)
-                #self.create_replicas(msg)
-            return True
-        #nem saját senzortól jön
-        else:
-            #a szenzőr szülő szervere él akkor azért kapja ez a szerver az adatot hogy duplikáltan tároljuk el az adatot
-            if msg.is_replica:
-                self.log('Received backup data:', msg)
-                if msg.parent_server_id not in self.backup_data:
-                    self.backup_data[msg.parent_server_id] = {}
-                if msg.sensor_id not in self.backup_data[msg.parent_server_id]:
-                    self.backup_data[msg.parent_server_id][msg.sensor_id] = []
-                if msg.content not in self.backup_data[msg.parent_server_id]:
-                    self.backup_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
-                return True
-            #a szenzor szülő szervere leállt és ezért kapja ez a szerver az adatot
+        self.queue.append(msg)
+        return True
+
+    #megkapja az adatot és eltárolja a megfelelő listában
+    def process_queue(self):
+        self.log('Processing queue messages')
+        for msg in self.queue:
+            #saját szenzortól jön az adat
+            if msg.parent_server_id == self.id:
+                self.log('Processed own data:', msg)
+                if msg.sensor_id not in self.data:
+                    self.data[msg.sensor_id] = []
+                if msg.content not in self.data[msg.sensor_id]:
+                    self.data[msg.sensor_id].append(msg.content)
+                    #self.create_replicas(msg)
+                #return True
+            #nem saját senzortól jön
             else:
-                self.log('Received recovery data:', msg)
-                if msg.parent_server_id not in self.recovery_data:
-                    self.recovery_data[msg.parent_server_id] = {}
-                if msg.sensor_id not in self.recovery_data[msg.parent_server_id]:
-                    self.recovery_data[msg.parent_server_id][msg.sensor_id] = []
-                if msg.content not in self.recovery_data[msg.parent_server_id]:
-                    self.recovery_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
-                self.create_replicas(msg)
-                return True
+                #a szenzőr szülő szervere él akkor azért kapja ez a szerver az adatot hogy duplikáltan tároljuk el az adatot
+                if msg.is_replica:
+                    self.log('Processed backup data:', msg)
+                    if msg.parent_server_id not in self.backup_data:
+                        self.backup_data[msg.parent_server_id] = {}
+                    if msg.sensor_id not in self.backup_data[msg.parent_server_id]:
+                        self.backup_data[msg.parent_server_id][msg.sensor_id] = []
+                    if msg.content not in self.backup_data[msg.parent_server_id]:
+                        self.backup_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
+                    #return True
+                #a szenzor szülő szervere leállt és ezért kapja ez a szerver az adatot
+                else:
+                    self.log('Processed recovery data:', msg)
+                    if msg.parent_server_id not in self.recovery_data:
+                        self.recovery_data[msg.parent_server_id] = {}
+                    if msg.sensor_id not in self.recovery_data[msg.parent_server_id]:
+                        self.recovery_data[msg.parent_server_id][msg.sensor_id] = []
+                    if msg.content not in self.recovery_data[msg.parent_server_id]:
+                        self.recovery_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
+                    self.create_replicas(msg)
+                    #return True
+        threading.Timer(10.0, self.send_replicas).start()
 
     #uzenet kuldese masik szervernek
     def send_message(self, server_id, msg):
@@ -115,6 +123,7 @@ class StorageServerService(rpyc.Service):
         for server_id in self.neighbour_servers:
             for sensor_id in self.data.keys():
                 msg = Message(sensor_id, self.default_gateway, self.data[sensor_id], True)
+                self.log('Sending replicas to:', server_id)
                 self.send_message(server_id, msg)
         threading.Timer(30.0, self.send_replicas).start()
 
@@ -125,6 +134,7 @@ class StorageServerService(rpyc.Service):
                     while self.recovery_data[server_id][sensor_id]:
                         data = self.recovery_data[server_id][sensor_id].pop()
                         msg = Message(sensor_id, server_id, data, False)
+                        self.log('Sending recovery data to:', server_id)
                         self.send_message(server_id, msg)
                 self.recovery_data.pop(server_id)
         threading.Timer(30.0, self.send_recoveries).start()
@@ -164,4 +174,5 @@ if __name__ == "__main__":
     this.log('Server started!')
     this.send_replicas()
     this.send_recoveries()
+    this.process_queue()
     x.join()
