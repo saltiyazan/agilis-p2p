@@ -61,13 +61,13 @@ class SensorService(rpyc.Service):
         for data in sending_data:
             #sajat szervernek probalja eloszor
             if self.try_to_send_data(self.default_gateway, data):
-                self.new_data.remove(data)
+                #self.new_data.remove(data)
                 continue
             #utana a tobbieknek
             for server_id in self.servers:
                 self.log('Sending recovery data ', data, ' to ', server_id)
                 if self.try_to_send_data(server_id, data):
-                    self.new_data.remove(data)
+                    #self.new_data.remove(data)
                     break
         threading.Timer(10.0, self.send_data).start()
 
@@ -81,7 +81,7 @@ class SensorService(rpyc.Service):
 
 
 def rpyc_start(sensor_instance):
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
     from rpyc.utils.server import ThreadedServer
     t = ThreadedServer(sensor_instance, port=9600, listener_timeout=60, logger=logging.getLogger())
     t.start()
