@@ -108,7 +108,7 @@ class StorageServerService(rpyc.Service):
                         self.recovery_data[msg.parent_server_id][msg.sensor_id].append(msg.content)
                     self.create_replicas(msg)
                     #return True
-        threading.Timer(10.0, self.send_replicas).start()
+        threading.Timer(10.0, self.process_queue).start()
 
     #uzenet kuldese masik szervernek
     def send_message(self, server_id, msg):
