@@ -1,0 +1,16 @@
+FROM python:latest
+ARG id
+ARG servers
+
+RUN mkdir -p /usr/src/server
+WORKDIR /usr/src/server
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN mkdir -p p2p
+COPY ./p2p/Sensor.py ./p2p/Sensor.py
+
+EXPOSE 9000
+
+CMD ["python","./p2p/Sensor.py"]

@@ -1,0 +1,44 @@
+sudo: required
+env:
+  global:
+    - SERVERS=2
+    - SENSORS=3
+language: python
+python:
+  - "3.6"
+services:
+  - docker
+jobs:
+  include:
+    - stage: build and push docker image
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker build -t p2p-server -f server_Dockerfile .
+        - docker build -t p2p-sensor -f sensor_Dockerfile .
+        - docker build -t p2p-registry -f registry_Dockerfile .
+        - docker tag p2p-server engedics/p2p-server:latest
+        - docker tag p2p-sensor engedics/p2p-sensor:latest
+        - docker tag p2p-registry engedics/p2p-registry:latest
+        - docker push engedics/p2p-server:latest
+        - docker push engedics/p2p-sensor:latest
+        - docker push engedics/p2p-registry:latest
+    - stage: run tests
+      install: pip install -r requirements.txt
+      name: complex messaging
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_complexMessaging.py
+    - name: data duplication
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_dataDuplication.py
+    - name: data received after recovery
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_dataReceivedAfterRecovery.py
+    - name: data sending
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_dataSending.py
+    - name: load test
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_loadTest.py
+    - name: replicas
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_replicas.py
+    - name: server down
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_serverDown.py
+    - name: multiple servers down
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_MultipleServersDown.py
+    - name: new server appearing
+      script: ./deploy.sh $SERVERS $SENSORS && pytest tests/test_newServerAppearing.py

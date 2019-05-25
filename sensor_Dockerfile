@@ -1,0 +1,18 @@
+FROM python:latest
+
+EXPOSE 9600
+
+RUN mkdir -p /usr/src/sensor
+WORKDIR /usr/src/sensor
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN mkdir -p p2p
+COPY ./p2p/Sensor.py ./p2p/Sensor.py
+COPY ./p2p/Message.py ./p2p/Message.py
+COPY ./p2p/config.py ./p2p/config.py
+
+ENV PYTHONPATH=/usr/src/sensor:/usr/src/sensor/p2p
+
+CMD ["python","./p2p/Sensor.py"]
